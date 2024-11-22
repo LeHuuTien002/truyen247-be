@@ -1,6 +1,7 @@
 package com.tien.truyen247be.controllers;
 
 import com.tien.truyen247be.payload.request.ComicRequest;
+import com.tien.truyen247be.payload.response.ComicResponse;
 import com.tien.truyen247be.security.services.ComicService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,12 +10,20 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
 public class ComicController {
     @Autowired
     private ComicService comicService;
+
+    // API tìm kiếm truyện theo tên
+    @GetMapping("/comics/search")
+    public ResponseEntity<List<ComicResponse>> searchComics(@RequestParam("name") String name) {
+        List<ComicResponse> comicResponses = comicService.searchComicsByName(name);
+        return ResponseEntity.ok(comicResponses);
+    }
 
     // Tạo một truyện tranh mới
     @PostMapping("/admin/comics/create")
@@ -35,9 +44,15 @@ public class ComicController {
     }
 
     // Lấy danh sách truyện tranh
-    @GetMapping("/comics/list")
+    @GetMapping("/admin/comics/list")
     public ResponseEntity<?> getAllComics() {
         return comicService.getAllComic();
+    }
+
+    // Lấy danh sách truyện tranh
+    @GetMapping("/comics/list")
+    public ResponseEntity<?> getAllComicsIsActive() {
+        return comicService.getAllComicIsActive();
     }
 
     // Lấy danh sách thể loại truyện theo id truyện
@@ -50,5 +65,10 @@ public class ComicController {
     @GetMapping("/comics/{id}")
     public ResponseEntity<?> getComicById(@PathVariable Long id) {
         return comicService.getComicById(id);
+    }
+
+    @GetMapping("comics/genre")
+    public ResponseEntity<?> getComicsByGenre(@RequestParam String genreName) {
+        return comicService.getComicsByGenreName(genreName);
     }
 }

@@ -26,7 +26,7 @@ public class ChapterService {
 
     // Tạo chương truyện
     public ResponseEntity<?> createChapter(Long id, ChapterRequest chapterRequest) {
-        if (chapterRepository.existsByComicId(id) && chapterRepository.existsByChapterNumber(chapterRequest.getChapterNumber())) {
+        if (chapterRepository.existsByComicIdAndChapterNumber(id, chapterRequest.getChapterNumber())) {
             throw new GenreAlreadyExistsException("Số chương đã tồn tại. Vui lòng chọn số chương khác.");
         } else {
             Comic comic = comicRepository.findById(id)

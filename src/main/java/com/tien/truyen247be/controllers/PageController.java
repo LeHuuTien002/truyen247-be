@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -17,9 +18,15 @@ public class PageController {
     private PageService pageService;
 
     @PostMapping("/admin/comic/chapter/{id}/create")
-    public ResponseEntity<?> createPage(@Valid @PathVariable Long id, @RequestPart("pageRequest") PageRequest pageRequest, @RequestPart("file") MultipartFile file) throws IOException {
-        return ResponseEntity.ok(pageService.createPage(id, pageRequest, file));
+    public ResponseEntity<?> createPages(
+            @Valid @PathVariable Long id,
+            @RequestPart("files") List<MultipartFile> files
+    ) throws IOException {
+        // Gọi service để xử lý logic
+        return ResponseEntity.ok(pageService.createPages(id, files));
     }
+
+
 
     @GetMapping("/comic/chapter/{id}/pages")
     public ResponseEntity<?> getPagesByChapterId(@PathVariable Long id) {

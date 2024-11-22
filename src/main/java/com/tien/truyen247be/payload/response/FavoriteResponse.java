@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -13,4 +15,6 @@ public class FavoriteResponse {
     private Long comicId;
     private String comicName;
     private String comicThumbnail;
+//    private Long chapterNumber;
+//    private LocalDateTime updateAt;
 }

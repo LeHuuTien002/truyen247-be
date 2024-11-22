@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,29 +31,46 @@ public class PageService {
     @Autowired
     private ChapterRepository chapterRepository;
 
-    // Tạo truyện tranh
-    public ResponseEntity<?> createPage(Long id, PageRequest pageRequest, MultipartFile file) throws IOException {
-        if (pageRepository.existsByPageNumberAndChapterId(pageRequest.getPageNumber(), id)) {
-            throw new GenreAlreadyExistsException("Số trang đã tồn tại. Vui lòng nhập số trang khác.");
-        } else {
-            // Tim truyen theo id
-            Chapter chapter = chapterRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chương với id: " + id));
+    public ResponseEntity<?> createPages(Long id, List<MultipartFile> files) throws IOException {
+        if (files.isEmpty()) {
+            throw new IllegalArgumentException("Danh sách file tải lên không được để trống.");
+        }
 
-            Page page = new Page();
+        // Tìm chương theo ID
+        Chapter chapter = chapterRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chương với id: " + id));
 
+        List<Page> pages = new ArrayList<>();
+
+        for (long i = 0L; i < files.size(); i++) {
+            MultipartFile file = files.get(Math.toIntExact(i));
+            Long pageNumber = i + 1; // Số trang tự động tăng dần từ 1
+
+            // Kiểm tra số trang đã tồn tại
+            if (pageRepository.existsByPageNumberAndChapterId(pageNumber, id)) {
+                throw new GenreAlreadyExistsException("Số trang " + pageNumber + " đã tồn tại. Vui lòng kiểm tra lại.");
+            }
+
+            // Tải file lên S3
             String imgUrl = s3Service.uploadFile(file);
 
-            page.setPageNumber(pageRequest.getPageNumber());
+            // Tạo đối tượng Page
+            Page page = new Page();
+            page.setPageNumber(pageNumber);
             page.setImageUrl(imgUrl);
             page.setUpdateAt(LocalDateTime.now());
             page.setChapter(chapter);
 
-            pageRepository.save(page);
-
-            return ResponseEntity.ok("Tạo trang mới thành công!");
+            // Thêm vào danh sách
+            pages.add(page);
         }
+
+        // Lưu tất cả các trang
+        pageRepository.saveAll(pages);
+
+        return ResponseEntity.ok("Tạo các trang mới thành công!");
     }
+
 
     // Cập nhật truyện
     public ResponseEntity<?> updatePage(Long idPage, PageRequest pageRequest, MultipartFile file) throws IOException {

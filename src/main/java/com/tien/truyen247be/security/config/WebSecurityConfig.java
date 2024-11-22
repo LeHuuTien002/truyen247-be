@@ -74,20 +74,18 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable()) // Tắt cơ chế bảo vệ CSRF vì hệ thống sử dụng JWT
-                .cors(withDefaults())// Kích hoạt CORS với cấu hình mặc định và dùng CorsConfigurationSource
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler)) // Xử lý lỗi không có quyền truy cập
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Không dùng session, vì JWT là stateless
+        http.csrf(csrf -> csrf.disable())
+                .cors(withDefaults())
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api/auth/**").permitAll() // Cho phép truy cập không cần xác thực với các URL bắt đầu bằng /api/auth/**
-                                .requestMatchers("/api/admin/**").hasRole("ADMIN") // Cho phép truy cập không cần xác thực với các URL bắt đầu bằng /api/admin/**
-                                .anyRequest().authenticated() // Yêu cầu tất cả các request khác phải xác thực
+                        auth.requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .anyRequest().authenticated()
                 );
-        // Đăng ký provider để xác thực thông tin người dùng
         http.authenticationProvider(authenticationProvider());
-        // Thêm filter kiểm tra JWT trước khi tiến hành xác thực bằng UsernamePasswordAuthenticationFilter
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-        return http.build(); // Xây dựng cấu hình bảo mật hoàn chỉnh
+        return http.build();
     }
 
     @Bean

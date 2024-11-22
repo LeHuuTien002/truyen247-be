@@ -2,6 +2,7 @@ package com.tien.truyen247be.security.services;
 
 import com.tien.truyen247be.Exception.ResourceNotFoundException;
 import com.tien.truyen247be.Exception.GenreAlreadyExistsException;
+import com.tien.truyen247be.mappers.ComicMapper;
 import com.tien.truyen247be.models.Comic;
 import com.tien.truyen247be.models.Genre;
 import com.tien.truyen247be.payload.request.ComicRequest;
@@ -32,6 +33,14 @@ public class ComicService {
 
     @Autowired
     private GenreRepository genreRepository;
+
+    @Autowired
+    private ComicMapper comicMapper;
+
+    public List<ComicResponse> searchComicsByName(String name) {
+        List<Comic> comics = comicRepository.findByNameContainingIgnoreCase(name);
+        return comicMapper.toComicResponses(comics);
+    }
 
     // Tạo truyện tranh
     public ResponseEntity<?> createComic(ComicRequest comicRequest, MultipartFile file) throws IOException {
@@ -157,6 +166,35 @@ public class ComicService {
         }
     }
 
+    // Lấy ds truyện
+    public ResponseEntity<List<ComicResponse>> getAllComicIsActive() {
+        List<Comic> comicList = comicRepository.findAll();
+        if (!comicList.isEmpty()) {
+            List<ComicResponse> comicResponseList = new ArrayList<>();
+            for (Comic comic : comicList) {
+                if (comic.isActivate()) {
+                    ComicResponse comicResponse = new ComicResponse();
+
+                    comicResponse.setId(comic.getId());
+                    comicResponse.setName(comic.getName());
+                    comicResponse.setOtherName(comic.getOtherName());
+                    comicResponse.setAuthor(comic.getAuthor());
+                    comicResponse.setContent(comic.getContent());
+                    comicResponse.setStatus(comic.getStatus());
+                    comicResponse.setActivate(comic.isActivate());
+                    comicResponse.setThumbnail(comic.getThumbnail());
+                    comicResponse.setCreateAt(comic.getCreateAt());
+                    comicResponse.setUpdateAt(comic.getUpdateAt());
+
+                    comicResponseList.add(comicResponse);
+                }
+            }
+            return ResponseEntity.ok(comicResponseList);
+        } else {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+    }
+
     // Lấy truyện tranh theo ID
     public ResponseEntity<ComicResponse> getComicById(Long id) {
         Optional<Comic> comicOptional = comicRepository.findById(id);
@@ -178,6 +216,31 @@ public class ComicService {
             comicResponse.setUpdateAt(comic.getUpdateAt());
 
             return ResponseEntity.ok(comicResponse);
+        }
+    }
+
+    public ResponseEntity<List<ComicResponse>> getComicsByGenreName(String genreName) {
+        Genre genre = genreRepository.findByName(genreName);
+        if (genre == null) {
+            throw new RuntimeException("Genre not found");
+        }
+
+        Set<Comic> comicList = genre.getComics();
+
+        if (!comicList.isEmpty()) {
+            List<ComicResponse> comicResponseList = new ArrayList<>();
+            for (Comic comic : comicList) {
+                ComicResponse comicResponse = new ComicResponse();
+
+                comicResponse.setId(comic.getId());
+                comicResponse.setName(comic.getName());
+                comicResponse.setThumbnail(comic.getThumbnail());
+
+                comicResponseList.add(comicResponse);
+            }
+            return ResponseEntity.ok(comicResponseList);
+        } else {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
     }
 }
