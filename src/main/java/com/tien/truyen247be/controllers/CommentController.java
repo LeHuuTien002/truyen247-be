@@ -8,27 +8,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/comments")
+@RequestMapping("/api")
 public class CommentController {
     @Autowired
     private CommentService commentService;
 
-    @PostMapping
+    @PostMapping("/comments")
     public ResponseEntity<?> addComment(@RequestBody CommentRequest commentRequest) {
         return commentService.addComment(commentRequest);
     }
 
-    @PostMapping("/reply")
+    @PostMapping("/comments/reply")
     public ResponseEntity<?> replyToComment(@RequestBody ReplyCommentRequest replyCommentRequest) {
         return commentService.replyToComment(replyCommentRequest);
     }
 
-    @GetMapping("/{comicId}")
-    public ResponseEntity<?> getAllComments(@PathVariable Long comicId) {
-        return commentService.getComments(comicId);
-    }
-
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/comments/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable Long id, @RequestParam Long userId) {
         return commentService.deleteComment(id, userId);
     }

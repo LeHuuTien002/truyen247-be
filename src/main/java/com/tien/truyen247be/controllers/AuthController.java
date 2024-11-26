@@ -3,10 +3,16 @@ package com.tien.truyen247be.controllers;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.tien.truyen247be.models.ERole;
+import com.tien.truyen247be.models.RegistrationType;
 import com.tien.truyen247be.models.Role;
 import com.tien.truyen247be.models.User;
 import com.tien.truyen247be.payload.request.LoginRequest;
+import com.tien.truyen247be.payload.request.OAuth2LoginRequest;
 import com.tien.truyen247be.payload.request.SignupRequest;
 import com.tien.truyen247be.payload.response.JwtResponse;
 import com.tien.truyen247be.payload.response.MessageResponse;
@@ -16,6 +22,8 @@ import com.tien.truyen247be.security.jwt.JwtUtils;
 import com.tien.truyen247be.security.services.UserDetailsImpl;
 import jakarta.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +33,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -33,6 +40,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     @Autowired
     AuthenticationManager authenticationManager;
 
@@ -83,62 +91,99 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/google/signin")
+    public ResponseEntity<?> authenticateGoogleUser(@RequestBody OAuth2LoginRequest oAuth2LoginRequest) {
+        try {
+            // Lấy idToken từ client
+            String idToken = oAuth2LoginRequest.getIdToken();
+            log.info("Received idToken: {}", idToken);
 
-    @GetMapping("/api/auth/google")
-    public ResponseEntity<?> googleLoginSuccess(OAuth2AuthenticationToken authentication) {
-        // Lấy thông tin người dùng từ Google
-        String email = authentication.getPrincipal().getAttributes().get("email").toString();
-        String name = authentication.getPrincipal().getAttributes().get("name").toString();
-        String googleId = authentication.getPrincipal().getName(); // Lấy Google ID từ OAuth token
-        String picture = authentication.getPrincipal().getAttributes().get("picture").toString();
+            // Xác thực idToken qua GoogleIdTokenVerifier
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+                    .setAudience(Collections.singletonList("874486330422-7ujmtvsvp104ufmdsmld2h3vil53av44.apps.googleusercontent.com"))
+                    .build();
 
-        // Kiểm tra người dùng đã tồn tại chưa
-        Optional<User> existingUser = userRepository.findByEmail(email);
+            GoogleIdToken googleIdToken = verifier.verify(idToken);
+            if (googleIdToken == null) {
+                log.error("Invalid Google ID Token");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Collections.singletonMap("message", "Token Google không hợp lệ"));
+            }
 
-        User user;
-        if (existingUser.isEmpty()) {
-            // Tạo tài khoản mới cho người dùng
-            user = new User();
-            user.setUsername(name);
-            user.setEmail(email);
-            user.setGoogle_id(googleId);
-            user.setPicture(picture);
+            // Lấy thông tin payload từ idToken
+            GoogleIdToken.Payload payload = googleIdToken.getPayload();
+            log.info("Google Payload: {}", payload);
 
-            Set<Role> roles = new HashSet<>();
-            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(userRole);
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String picture = (String) payload.get("picture");
+            String googleId = payload.getSubject(); // Google ID (subject từ token)
+            log.info("Email: {}, Name: {}, Picture: {}, Google ID: {}", email, name, picture, googleId);
 
-            user.setRoles(roles);
-            userRepository.save(user); // Lưu thông tin người dùng mới vào DB
-        } else {
-            // Nếu người dùng đã tồn tại, lấy thông tin người dùng
-            user = existingUser.get();
+            // Kiểm tra xem người dùng đã tồn tại trong database chưa
+            Optional<User> userOptional = userRepository.findByEmail(email);
+            User user;
+            if (userOptional.isPresent()) {
+                // Nếu người dùng đã tồn tại, cập nhật thông tin Google (nếu cần)
+                user = userOptional.get();
+                log.info("User exists: {}", user);
+
+                // Cập nhật thông tin nếu có thay đổi
+                boolean isUpdated = false;
+                if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
+                    user.setGoogleId(googleId);
+                    isUpdated = true;
+                }
+                if (user.getPicture() == null || !user.getPicture().equals(picture)) {
+                    user.setPicture(picture);
+                    isUpdated = true;
+                }
+                if (isUpdated) {
+                    userRepository.save(user);
+                    log.info("User updated with Google info: {}", user);
+                }
+            } else {
+                // Nếu người dùng chưa tồn tại, tạo mới
+                log.info("User not found, creating new user");
+                user = new User();
+                user.setEmail(email);
+                user.setUsername(name);
+                user.setPassword(UUID.randomUUID().toString()); // Đặt mật khẩu ngẫu nhiên
+                user.setPicture(picture);
+                user.setRegistrationType(RegistrationType.GOOGLE);
+                user.setGoogleId(googleId);
+                user.setRoles(Collections.singleton(roleRepository.findByName(ERole.ROLE_USER)
+                        .orElseThrow(() -> new RuntimeException("Role không tồn tại"))));
+                userRepository.save(user);
+                log.info("New user created: {}", user);
+            }
+
+            // Chuyển đổi từ User sang UserDetailsImpl
+            UserDetailsImpl userDetails = UserDetailsImpl.build(user);
+
+            // Tạo đối tượng Authentication từ UserDetailsImpl
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Tạo JWT token từ thông tin xác thực
+            String jwt = jwtUtils.generateJwtToken(authentication);
+
+            // Trả về JWT và thông tin người dùng
+            return ResponseEntity.ok(new JwtResponse(
+                    jwt,
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRoles().stream()
+                            .map(role -> role.getName().name())
+                            .collect(Collectors.toList())
+            ));
+        } catch (Exception e) {
+            log.error("Google Sign-In Error: ", e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.singletonMap("message", "Xác thực Google không thành công"));
         }
-
-        // Tạo đối tượng Authentication từ thông tin người dùng
-        Authentication authenticationToken = new UsernamePasswordAuthenticationToken(user.getEmail(), null, user.getAuthorities());
-
-        // Đặt Authentication vào SecurityContext
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-
-        // Tạo JWT token dựa trên thông tin xác thực
-        String jwt = jwtUtils.generateJwtToken(authenticationToken);
-
-        // Lấy thông tin chi tiết của người dùng từ đối tượng Authentication
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-
-        // Lấy danh sách các vai trò (roles) của người dùng từ authorities
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(item -> item.getAuthority())
-                .collect(Collectors.toList());
-
-        // Trả về JWT token cùng với thông tin người dùng
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                roles));
     }
 
     @PostMapping("/signup")
@@ -159,6 +204,7 @@ public class AuthController {
         User user = new User();
         user.setUsername(signUpRequest.getUsername());
         user.setEmail(signUpRequest.getEmail());
+        user.setRegistrationType(RegistrationType.STANDARD);
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
 
         Set<String> strRoles = signUpRequest.getRole();

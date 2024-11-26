@@ -60,6 +60,11 @@ public class HistoryController {
         }
     }
 
+    @GetMapping("/recent-logs-by-user")
+    public ResponseEntity<?> getRecentLogsByUser(@RequestParam Long userId) {
+        return historyService.getTop3RecentLogsByUser(userId);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteReadingHistory(@PathVariable Long id) {
         try {

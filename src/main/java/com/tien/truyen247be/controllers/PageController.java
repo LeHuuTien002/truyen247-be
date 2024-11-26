@@ -22,18 +22,9 @@ public class PageController {
             @Valid @PathVariable Long id,
             @RequestPart("files") List<MultipartFile> files
     ) throws IOException {
-        // Gọi service để xử lý logic
         return ResponseEntity.ok(pageService.createPages(id, files));
     }
 
-
-
-    @GetMapping("/comic/chapter/{id}/pages")
-    public ResponseEntity<?> getPagesByChapterId(@PathVariable Long id) {
-        return pageService.getPagesByChapterId(id);
-    }
-
-    // Cập nhật truyện tranh
     @PutMapping("/admin/comic/chapter/pages/{id}/update")
     public ResponseEntity<?> updatePage(@Valid @PathVariable Long id, @RequestPart("pageRequest") PageRequest pageRequest, @RequestPart("file") MultipartFile file) throws IOException {
         return ResponseEntity.ok(pageService.updatePage(id, pageRequest, file));

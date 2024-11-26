@@ -10,6 +10,7 @@ import com.tien.truyen247be.repository.ComicRepository;
 import com.tien.truyen247be.repository.HistoryRepository;
 import com.tien.truyen247be.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -79,6 +80,26 @@ public class HistoryService {
 
     public ResponseEntity<List<HistoryResponse>> getHistoriesByUserId(Long userId) {
         List<History> historyList = historyRepository.findByUserId(userId);
+        List<HistoryResponse> historyResponseList = new ArrayList<>();
+
+        for (History history : historyList) {
+            HistoryResponse historyResponse = new HistoryResponse();
+
+            historyResponse.setId(history.getId());
+            historyResponse.setComicId(history.getComic().getId());
+            historyResponse.setChapterId(history.getChapter().getId());
+            historyResponse.setComicName(history.getComic().getName());
+            historyResponse.setComicThumbnail(history.getComic().getThumbnail());
+            historyResponse.setChapterNumber(history.getChapter().getChapterNumber());
+
+            historyResponseList.add(historyResponse);
+        }
+
+        return ResponseEntity.ok(historyResponseList);
+    }
+
+    public ResponseEntity<List<HistoryResponse>> getTop3RecentLogsByUser(Long userId) {
+        List<History> historyList = historyRepository.findByUserIdOrderByLastReadTimeDesc(userId, PageRequest.of(0, 3));
         List<HistoryResponse> historyResponseList = new ArrayList<>();
 
         for (History history : historyList) {

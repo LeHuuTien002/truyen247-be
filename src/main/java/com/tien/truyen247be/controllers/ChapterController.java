@@ -19,11 +19,6 @@ public class ChapterController {
         return ResponseEntity.ok(chapterService.createChapter(id, chapterRequest));
     }
 
-    @GetMapping("/comic/{id}/chapters/list")
-    public ResponseEntity<?> getAllChapters(@PathVariable Long id) {
-        return chapterService.getAllChapters(id);
-    }
-
     @PutMapping("/admin/comic/{comicId}/chapters/{chapterId}")
     public ResponseEntity<?> updateChapter(@PathVariable Long comicId, @PathVariable Long chapterId, @Valid @RequestBody ChapterRequest chapterRequest) {
         return ResponseEntity.ok(chapterService.updateChapter(comicId, chapterId, chapterRequest));

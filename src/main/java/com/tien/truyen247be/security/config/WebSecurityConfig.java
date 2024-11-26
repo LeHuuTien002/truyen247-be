@@ -2,6 +2,7 @@ package com.tien.truyen247be.security.config;
 
 import com.tien.truyen247be.security.jwt.AuthEntryPointJwt;
 import com.tien.truyen247be.security.jwt.AuthTokenFilter;
+import com.tien.truyen247be.security.services.OAuth2LoginSuccessHandler;
 import com.tien.truyen247be.security.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -78,10 +79,14 @@ public class WebSecurityConfig {
                 .cors(withDefaults())
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                                .anyRequest().authenticated()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
+                ).oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler())
+                        .failureUrl("/api/auth/failure")
                 );
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -89,11 +94,20 @@ public class WebSecurityConfig {
     }
 
     @Bean
+    public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {
+        return new OAuth2LoginSuccessHandler();
+    }
+
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // Chỉ cho phép từ origin này
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Các phương thức được phép
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type")); // Các headers được phép
+        // Thêm các header để giải quyết vấn đề Cross-Origin-Opener-Policy
+        configuration.addExposedHeader("Cross-Origin-Opener-Policy");
+        configuration.addExposedHeader("Cross-Origin-Embedder-Policy");
         configuration.setAllowCredentials(true); // Cho phép gửi cookies hoặc thông tin xác thực (nếu cần)
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

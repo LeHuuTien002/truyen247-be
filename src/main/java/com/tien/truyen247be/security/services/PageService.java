@@ -72,7 +72,6 @@ public class PageService {
     }
 
 
-    // Cập nhật truyện
     public ResponseEntity<?> updatePage(Long idPage, PageRequest pageRequest, MultipartFile file) throws IOException {
         Optional<Page> pageOptional = pageRepository.findById(idPage);
         if (pageOptional.isEmpty()) {

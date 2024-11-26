@@ -64,7 +64,7 @@ public class CommentService {
         return new CommentResponse(
                 comment.getId(),
                 comment.getContent(),
-                new UserResponse(comment.getUser().getId(), comment.getUser().getUsername()),
+                new UserResponse(comment.getUser().getId(), comment.getUser().getUsername(), comment.getUser().getPicture()),
                 comment.getReplies().stream()
                         .map(this::mapToCommentResponse)
                         .collect(Collectors.toList()),
