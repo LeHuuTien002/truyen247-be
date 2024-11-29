@@ -20,26 +20,37 @@ public class Comic {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(nullable = false)
     private String name;
+
     @Column(nullable = false)
     private String otherName;
+
     @Column(nullable = false)
     private String status;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
+
     @Column(nullable = false)
     private String author;
+
     @Column(nullable = false)
     private boolean activate; // Mặc định truyện đang hoạt động
+
     @Column(nullable = false)
     private String thumbnail; // URL hoặc đường dẫn tới ảnh bìa
+
     @Column(name = "create_at", nullable = false, updatable = false)
     private LocalDateTime createAt;
+
     @Column(name = "update_at")
     private LocalDateTime updateAt;
+
     @OneToMany(mappedBy = "comic", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Chapter> chapters = new HashSet<>();
+
     @ManyToMany
     @JoinTable(name = "comic_genre",
             joinColumns = @JoinColumn(name = "comic_id"),
@@ -47,8 +58,6 @@ public class Comic {
     )
     private Set<Genre> genres = new HashSet<>();
 
-    public Comic(Long comicId) {
-    }
 
     // Phương thức này sẽ chạy trước khi một bản ghi mới được lưu vào cơ sở dữ liệu
     @PrePersist

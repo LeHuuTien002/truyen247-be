@@ -2,7 +2,6 @@ package com.tien.truyen247be.security.config;
 
 import com.tien.truyen247be.security.jwt.AuthEntryPointJwt;
 import com.tien.truyen247be.security.jwt.AuthTokenFilter;
-import com.tien.truyen247be.security.services.OAuth2LoginSuccessHandler;
 import com.tien.truyen247be.security.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +17,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.ClientRegistrations;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -31,14 +34,18 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 @EnableMethodSecurity // Kích hoạt bảo mật ở cấp phương thức, cho phép kiểm tra quyền trên các method riêng lẻ
 public class WebSecurityConfig {
-    @Value("${cloud.aws.credentials.accessKey}")
-    private String accessKey;
+    // Inject các giá trị từ application.properties
+    @Value("${oauth2.client.registration.google.client-id}")
+    private String googleClientId;
 
-    @Value("${cloud.aws.credentials.secretKey}")
-    private String secretKey;
+    @Value("${oauth2.client.registration.google.client-secret}")
+    private String googleClientSecret;
 
-    @Value("${cloud.aws.region.static}")
-    private String region;
+    @Value("${oauth2.client.registration.google.scope}")
+    private String googleScope;
+
+    @Value("${oauth2.client.registration.google.redirect-uri}")
+    private String googleRedirectUri;
 
     @Autowired
     UserDetailsServiceImpl userDetailsService; // Service để lấy thông tin người dùng từ DB hoặc nguồn khác
@@ -84,9 +91,10 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
-                ).oauth2Login(oauth2 -> oauth2
-                        .successHandler(oAuth2LoginSuccessHandler())
-                        .failureUrl("/api/auth/failure")
+                ).oauth2Login(oauth2 ->
+                        oauth2
+                                .loginPage("/login")  // Đặt URL login cho OAuth2
+                                .failureUrl("/api/auth/failure")  // URL khi login thất bại
                 );
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -94,10 +102,21 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {
-        return new OAuth2LoginSuccessHandler();
+    public ClientRegistrationRepository clientRegistrationRepository() {
+        return new InMemoryClientRegistrationRepository(googleClientRegistration());
     }
 
+    // OAuth2AuthorizedClientRepository không cần khai báo riêng, Spring sẽ tự động cấu hình.
+    // Đoạn mã này chỉ cần clientRegistrationRepository
+    private ClientRegistration googleClientRegistration() {
+        return ClientRegistrations
+                .fromIssuerLocation("https://accounts.google.com")
+                .clientId(googleClientId)
+                .clientSecret(googleClientSecret)
+                .scope(googleScope)
+                .redirectUri(googleRedirectUri)
+                .build();
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

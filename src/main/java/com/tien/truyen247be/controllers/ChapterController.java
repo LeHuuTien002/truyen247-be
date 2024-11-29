@@ -33,4 +33,14 @@ public class ChapterController {
     public ResponseEntity<?> getChapterById(@PathVariable Long id) {
         return chapterService.getChapterById(id);
     }
+
+    @GetMapping("/admin/comic/{id}/chapters/list")
+    public ResponseEntity<?> getAllChapters(@PathVariable Long id) {
+        return chapterService.getAllChapters(id);
+    }
+
+    @GetMapping("/chapters/{comicId}")
+    public ResponseEntity<?> getChaptersByComicId(@PathVariable Long comicId, @RequestParam Long userId) {
+        return chapterService.getChaptersByComicId(comicId, userId);
+    }
 }

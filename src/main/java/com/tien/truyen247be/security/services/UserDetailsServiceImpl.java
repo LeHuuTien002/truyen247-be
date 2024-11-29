@@ -1,7 +1,9 @@
 package com.tien.truyen247be.security.services;
 
+import com.tien.truyen247be.Exception.GenreAlreadyExistsException;
 import com.tien.truyen247be.mappers.UserMapper;
 import com.tien.truyen247be.models.User;
+import com.tien.truyen247be.payload.request.UserRequest;
 import com.tien.truyen247be.payload.response.UserResponse;
 import com.tien.truyen247be.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Service
@@ -46,5 +51,31 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         user.setPicture(avatar);
         userRepository.save(user);
         return ResponseEntity.ok("Cập nhật avatar thành công!");
+    }
+
+    public ResponseEntity<?> getAllUser() {
+        List<User> users = userRepository.findAll();
+        List<UserResponse> userResponses = new ArrayList<>();
+        for (User user : users) {
+            UserResponse userResponse = UserMapper.toUserResponse(user);
+            userResponses.add(userResponse);
+        }
+        return ResponseEntity.ok(userResponses);
+    }
+
+    public ResponseEntity<?> updateUser(Long userId, UserRequest request) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        user.setActive(request.isActive());
+        userRepository.save(user);
+        return ResponseEntity.ok("Cập nhật thành công");
+    }
+
+    public ResponseEntity<?> deleteUser(Long idUser) {
+        if (!userRepository.existsById(idUser)) {
+            throw new GenreAlreadyExistsException("Id người dùng không tồn tại!");
+        } else {
+            userRepository.deleteById(idUser);
+        }
+        return ResponseEntity.ok("Đã xóa thành công!");
     }
 }

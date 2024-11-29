@@ -1,5 +1,6 @@
 package com.tien.truyen247be.controllers;
 
+import com.tien.truyen247be.models.User;
 import com.tien.truyen247be.payload.response.ComicResponse;
 import com.tien.truyen247be.payload.response.UserResponse;
 import com.tien.truyen247be.security.services.*;
@@ -83,11 +84,6 @@ public class PublicController {
         return ResponseEntity.ok(comicResponses);
     }
 
-    @GetMapping("/public/comic/{id}/chapters/list")
-    public ResponseEntity<?> getAllChapters(@PathVariable Long id) {
-        return chapterService.getAllChapters(id);
-    }
-
     @GetMapping("/public/users/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         UserResponse userResponse = userDetailsService.getUserById(id);
@@ -100,5 +96,10 @@ public class PublicController {
             @RequestParam("file") MultipartFile files
     ) throws IOException {
         return ResponseEntity.ok(userDetailsService.createAvatar(id, files));
+    }
+
+    @GetMapping("/public/chapters/{comicId}")
+    public ResponseEntity<?> getChaptersByComicId(@PathVariable Long comicId) {
+        return chapterService.getChaptersByComicId(comicId);
     }
 }

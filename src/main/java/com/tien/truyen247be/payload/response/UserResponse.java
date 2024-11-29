@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
@@ -17,7 +19,12 @@ public class UserResponse {
     private String email;
     private String picture;
     private String registrationType;
+    private boolean active;
+    private boolean premium;
+    private LocalDate premiumExpiryDate;
     private Set<String> roles;
+    private LocalDateTime createAt;
+    private LocalDateTime updateAt;
 
     public UserResponse(Long id, String username,String picture) {
         this.id = id;

@@ -25,10 +25,12 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -56,6 +58,9 @@ public class AuthController {
     @Autowired
     JwtUtils jwtUtils;
 
+    @Value("${oauth2.client.registration.google.client-id}")
+    private String googleClientId;  // Inject client-id từ properties
+
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
@@ -64,14 +69,15 @@ public class AuthController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
+            // Lấy thông tin người dùng
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
             // Lưu đối tượng Authentication vào SecurityContext
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // Tạo JWT token sau khi xác thực thành công
             String jwt = jwtUtils.generateJwtToken(authentication);
 
-            // Lấy thông tin người dùng
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             List<String> roles = userDetails.getAuthorities().stream()
                     .map(item -> item.getAuthority())
                     .collect(Collectors.toList());
@@ -83,11 +89,21 @@ public class AuthController {
                     userDetails.getEmail(),
                     roles));
 
+        } catch (DisabledException e) {
+            // Trả về thông báo lỗi nếu tài khoản bị vô hiệu hóa
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(Collections.singletonMap("message", "Tài khoản của bạn đã bị khóa hoặc không hoạt động."));
         } catch (BadCredentialsException e) {
-            // Trả về thông báo lỗi cụ thể khi đăng nhập sai
+            // Trả về thông báo lỗi nếu tài khoản hoặc mật khẩu sai
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body(Collections.singletonMap("message", "Tài khoản hoặc mật khẩu không chính xác"));
+        } catch (Exception e) {
+            // Xử lý lỗi không xác định
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("message", "Đã xảy ra lỗi trong quá trình đăng nhập"));
         }
     }
 
@@ -100,7 +116,7 @@ public class AuthController {
 
             // Xác thực idToken qua GoogleIdTokenVerifier
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
-                    .setAudience(Collections.singletonList("874486330422-7ujmtvsvp104ufmdsmld2h3vil53av44.apps.googleusercontent.com"))
+                    .setAudience(Collections.singletonList(googleClientId))  // Dùng googleClientId từ file properties
                     .build();
 
             GoogleIdToken googleIdToken = verifier.verify(idToken);
@@ -124,11 +140,17 @@ public class AuthController {
             Optional<User> userOptional = userRepository.findByEmail(email);
             User user;
             if (userOptional.isPresent()) {
-                // Nếu người dùng đã tồn tại, cập nhật thông tin Google (nếu cần)
+                // Nếu người dùng đã tồn tại, kiểm tra trạng thái tài khoản
                 user = userOptional.get();
                 log.info("User exists: {}", user);
 
-                // Cập nhật thông tin nếu có thay đổi
+                if (!user.isActive()) {
+                    log.error("User is disabled: {}", user);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Collections.singletonMap("message", "Tài khoản của bạn đã bị khóa hoặc không hoạt động."));
+                }
+
+                // Cập nhật thông tin Google (nếu cần)
                 boolean isUpdated = false;
                 if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
                     user.setGoogleId(googleId);
@@ -152,6 +174,7 @@ public class AuthController {
                 user.setPicture(picture);
                 user.setRegistrationType(RegistrationType.GOOGLE);
                 user.setGoogleId(googleId);
+                user.setActive(true); // Kích hoạt tài khoản mới tạo
                 user.setRoles(Collections.singleton(roleRepository.findByName(ERole.ROLE_USER)
                         .orElseThrow(() -> new RuntimeException("Role không tồn tại"))));
                 userRepository.save(user);
@@ -185,6 +208,7 @@ public class AuthController {
                     .body(Collections.singletonMap("message", "Xác thực Google không thành công"));
         }
     }
+
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {

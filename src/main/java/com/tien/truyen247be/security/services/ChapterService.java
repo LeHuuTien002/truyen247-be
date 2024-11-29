@@ -4,15 +4,21 @@ import com.tien.truyen247be.Exception.ResourceNotFoundException;
 import com.tien.truyen247be.Exception.GenreAlreadyExistsException;
 import com.tien.truyen247be.models.Chapter;
 import com.tien.truyen247be.models.Comic;
+import com.tien.truyen247be.models.User;
 import com.tien.truyen247be.payload.request.ChapterRequest;
 import com.tien.truyen247be.payload.response.ChapterResponse;
 import com.tien.truyen247be.repository.ChapterRepository;
 import com.tien.truyen247be.repository.ComicRepository;
+import com.tien.truyen247be.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +29,9 @@ public class ChapterService {
 
     @Autowired
     private ChapterRepository chapterRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // Tạo chương truyện
     public ResponseEntity<?> createChapter(Long id, ChapterRequest chapterRequest) {
@@ -80,6 +89,58 @@ public class ChapterService {
                         chapter.getUpdateAt()
                 )).toList();
         return ResponseEntity.ok(chapterResponses);
+    }
+
+    public ResponseEntity<List<ChapterResponse>> getChaptersByComicId(Long comicId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        List<Chapter> chapters = chapterRepository.findByComicId(comicId);
+
+        // Chuyển đổi Chapter sang ChapterResponse
+        List<ChapterResponse> chapterResponses = chapters.stream()
+                .map(chapter -> new ChapterResponse(
+                        chapter.getId(),
+                        chapter.getTitle(),
+                        chapter.getChapterNumber(),
+                        chapter.getCreateAt(),
+                        chapter.getUpdateAt()
+                ))
+                .toList();
+
+        if (user.isPremium() && user.getPremiumExpiryDate().isAfter(LocalDate.now())) {
+            // Nếu user là premium, trả toàn bộ chapterResponse
+            return ResponseEntity.ok(chapterResponses);
+        } else {
+            // Nếu user không phải premium, trả về 5 chapterResponse đầu (sắp xếp theo chapterNumber)
+            List<ChapterResponse> limitedChapters = chapterResponses.stream()
+                    .sorted(Comparator.comparingLong(ChapterResponse::getChapterNumber))  // Sắp xếp theo chapterNumber
+                    .limit(5)  // Lấy 5 chương đầu
+                    .toList();
+            return ResponseEntity.ok(limitedChapters);
+        }
+    }
+
+    public ResponseEntity<List<ChapterResponse>> getChaptersByComicId(Long comicId) {
+
+        List<Chapter> chapters = chapterRepository.findByComicId(comicId);
+
+        // Chuyển đổi Chapter sang ChapterResponse
+        List<ChapterResponse> chapterResponses = chapters.stream()
+                .map(chapter -> new ChapterResponse(
+                        chapter.getId(),
+                        chapter.getTitle(),
+                        chapter.getChapterNumber(),
+                        chapter.getCreateAt(),
+                        chapter.getUpdateAt()
+                ))
+                .toList();
+
+        List<ChapterResponse> limitedChapters = chapterResponses.stream()
+                .sorted(Comparator.comparingLong(ChapterResponse::getChapterNumber))  // Sắp xếp theo chapterNumber
+                .limit(5)  // Lấy 5 chương đầu
+                .toList();
+        return ResponseEntity.ok(limitedChapters);
     }
 
     // Lấy truyện tranh theo ID
