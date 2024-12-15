@@ -2,12 +2,13 @@ package com.tien.truyen247be.security.services;
 
 import com.tien.truyen247be.Exception.ResourceNotFoundException;
 import com.tien.truyen247be.Exception.GenreAlreadyExistsException;
-import com.tien.truyen247be.mappers.ComicMapper;
 import com.tien.truyen247be.models.Comic;
+import com.tien.truyen247be.models.View;
 import com.tien.truyen247be.models.Genre;
 import com.tien.truyen247be.payload.request.ComicRequest;
 import com.tien.truyen247be.payload.response.ComicResponse;
 import com.tien.truyen247be.repository.ComicRepository;
+import com.tien.truyen247be.repository.ViewRepository;
 import com.tien.truyen247be.repository.GenreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,11 +36,31 @@ public class ComicService {
     private GenreRepository genreRepository;
 
     @Autowired
-    private ComicMapper comicMapper;
+    private ViewRepository viewRepository;
+
+    @Autowired
+    private ViewService viewService;
+
+    @Autowired
+    private FavoriteService favoriteService;
+
+    @Autowired
+    private CommentService commentService;
 
     public List<ComicResponse> searchComicsByName(String name) {
         List<Comic> comics = comicRepository.findByNameContainingIgnoreCase(name);
-        return comicMapper.toComicResponses(comics);
+        List<ComicResponse> comicResponses = new ArrayList<>();
+        for (Comic comic : comics) {
+            ComicResponse comicResponse = new ComicResponse();
+            comicResponse.setId(comic.getId());
+            comicResponse.setName(comic.getName());
+            comicResponse.setThumbnail(comic.getThumbnail());
+            comicResponse.setViews(viewService.getViewsByComicId(comic.getId()));
+            comicResponse.setNumberOfComment(commentService.getNumberOfComments(comic.getId()));
+            comicResponse.setFavorites(favoriteService.countFavorites(comic.getId()));
+            comicResponses.add(comicResponse);
+        }
+        return comicResponses;
     }
 
     // Tạo truyện tranh
@@ -57,7 +78,6 @@ public class ComicService {
 
             // Tạo một đối tượng Comic
             Comic comic = new Comic();
-
             comic.setName(comicRequest.getName());
             comic.setOtherName(comicRequest.getOtherName());
             comic.setAuthor(comicRequest.getAuthor());
@@ -69,8 +89,14 @@ public class ComicService {
 
             // Gán danh sách thể loại vào Comic
             comic.setGenres(genres);
+            Comic savedComic = comicRepository.save(comic);
 
-            comicRepository.save(comic);
+            // Tạo view
+            View view = new View();
+            view.setViewsCount(0L);
+            view.setComic(savedComic);
+            view.setLastUpdated(LocalDateTime.now());
+            viewRepository.save(view);
 
             return ResponseEntity.ok("Tạo truyện mới thành công!");
         } else {
@@ -180,6 +206,9 @@ public class ComicService {
                     comicResponse.setOtherName(comic.getOtherName());
                     comicResponse.setAuthor(comic.getAuthor());
                     comicResponse.setContent(comic.getContent());
+                    comicResponse.setViews(viewService.getViewsByComicId(comic.getId()));
+                    comicResponse.setFavorites(favoriteService.countFavorites(comic.getId()));
+                    comicResponse.setNumberOfComment(commentService.getNumberOfComments(comic.getId()));
                     comicResponse.setStatus(comic.getStatus());
                     comicResponse.setActivate(comic.isActivate());
                     comicResponse.setThumbnail(comic.getThumbnail());
@@ -195,7 +224,7 @@ public class ComicService {
         }
     }
 
-    // Lấy truyện tranh theo ID
+    // Lấy chi tiết truyện tranh theo ID
     public ResponseEntity<ComicResponse> getComicById(Long id) {
         Optional<Comic> comicOptional = comicRepository.findById(id);
         if (comicOptional.isEmpty()) {
@@ -209,6 +238,8 @@ public class ComicService {
             comicResponse.setOtherName(comic.getOtherName());
             comicResponse.setAuthor(comic.getAuthor());
             comicResponse.setContent(comic.getContent());
+            comicResponse.setViews(viewService.getViewsByComicId(id));
+            comicResponse.setFavorites(favoriteService.countFavorites(id));
             comicResponse.setStatus(comic.getStatus());
             comicResponse.setActivate(comic.isActivate());
             comicResponse.setThumbnail(comic.getThumbnail());
@@ -219,10 +250,27 @@ public class ComicService {
         }
     }
 
+    // Lấy chi tiết truyện tranh theo ID cho ADMIN
+    public ResponseEntity<ComicResponse> getInfoComicForChapterList(Long id) {
+        Optional<Comic> comicOptional = comicRepository.findById(id);
+        if (comicOptional.isEmpty()) {
+            throw new GenreAlreadyExistsException("Id truyện này không tồn tại!");
+        } else {
+            Comic comic = comicOptional.get();
+            ComicResponse comicResponse = new ComicResponse();
+
+            comicResponse.setId(comic.getId());
+            comicResponse.setName(comic.getName());
+            comicResponse.setUpdateAt(comic.getUpdateAt());
+
+            return ResponseEntity.ok(comicResponse);
+        }
+    }
+
     public ResponseEntity<List<ComicResponse>> getComicsByGenreName(String genreName) {
         Genre genre = genreRepository.findByName(genreName);
         if (genre == null) {
-            throw new RuntimeException("Genre not found");
+            throw new RuntimeException("Thể loại không tìm thấy");
         }
 
         Set<Comic> comicList = genre.getComics();
@@ -234,7 +282,10 @@ public class ComicService {
 
                 comicResponse.setId(comic.getId());
                 comicResponse.setName(comic.getName());
+                comicResponse.setViews(viewService.getViewsByComicId(comic.getId()));
+                comicResponse.setFavorites(favoriteService.countFavorites(comic.getId()));
                 comicResponse.setThumbnail(comic.getThumbnail());
+                comicResponse.setNumberOfComment(commentService.getNumberOfComments(comic.getId()));
 
                 comicResponseList.add(comicResponse);
             }

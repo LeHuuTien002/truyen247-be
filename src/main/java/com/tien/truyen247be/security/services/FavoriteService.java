@@ -4,7 +4,6 @@ import com.tien.truyen247be.Exception.ResourceNotFoundException;
 import com.tien.truyen247be.models.Comic;
 import com.tien.truyen247be.models.Favorite;
 import com.tien.truyen247be.models.User;
-import com.tien.truyen247be.payload.response.ComicResponse;
 import com.tien.truyen247be.payload.response.FavoriteResponse;
 import com.tien.truyen247be.repository.ComicRepository;
 import com.tien.truyen247be.repository.FavoriteRepository;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,14 +22,23 @@ public class FavoriteService {
 
     @Autowired
     private ComicRepository comicRepository;
+
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ViewService viewService;
+
+    @Autowired
+    private CommentService commentService;
+
+
     public ResponseEntity<List<FavoriteResponse>> getFavorites(Long userId) {
         List<Favorite> favorites = favoriteRepository.findByUserId(userId);
+
         return ResponseEntity.ok(favorites.stream().map(Favorite -> {
             Comic comic = Favorite.getComic();
-            return new FavoriteResponse(comic.getId(), comic.getName(), comic.getThumbnail());
+            return new FavoriteResponse(comic.getId(), comic.getName(), comic.getThumbnail(), viewService.getViewsByComicId(comic.getId()), countFavorites(comic.getId()), commentService.getNumberOfComments(comic.getId()));
         }).collect(Collectors.toList()));
     }
 
@@ -52,5 +59,9 @@ public class FavoriteService {
 
     public boolean isFavorite(Long userId, Long comicId) {
         return favoriteRepository.findByUserIdAndComicId(userId, comicId).isPresent();
+    }
+
+    public Long countFavorites(Long comicId) {
+        return favoriteRepository.countByComicId(comicId);
     }
 }

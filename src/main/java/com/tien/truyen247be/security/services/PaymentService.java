@@ -6,12 +6,14 @@ import com.tien.truyen247be.models.User;
 import com.tien.truyen247be.repository.PaymentRepository;
 import com.tien.truyen247be.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -25,18 +27,31 @@ public class PaymentService {
     @Autowired
     private VietinBankApiService vietinBankApiService;
 
+    @Value("${payment.scheduler.limit:10}") // Số lượng giao dịch mặc định là 10
+    private int transactionLimit;
+
+    @Value("${payment.scheduler.validAccountNumbers}") // Các tài khoản hợp lệ
+    private String validAccountNumbersConfig;
+
+    @Value("${payment.scheduler.paymentPrefix:SEVQR}") // Tiền tố mã thanh toán
+    private String paymentPrefix;
+
 
     // Tạo giao dịch thanh toán
     public Payment createPayment(Long userId, String paymentCode, String paymentMethod, Double amount) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Kiểm tra thời gian tạo thanh toán gần nhất
-        if (user.getLastPaymentCreateAt() != null) {
-            long minutesSinceLastPayment = Duration.between(user.getLastPaymentCreateAt(), LocalDateTime.now()).toMinutes();
-            if (minutesSinceLastPayment < 5) {
-                throw new RuntimeException("Bạn chỉ có thể tạo thanh toán mới sau 5 phút.");
-            }
+        String startDate = LocalDate.now().toString();
+        String endDate = LocalDate.now().plusDays(1).toString();
+        List<String> validAccountNumbers = Arrays.asList(validAccountNumbersConfig.split(","));
+
+        // Kiểm tra xem giao dịch đã tồn tại chưa
+        Payment existingPayment = paymentRepository.findByPaymentCode(paymentCode);
+        if (existingPayment != null) {
+            // Nếu giao dịch đã tồn tại, xác nhận lại giao dịch
+            confirmPayments(startDate, endDate, transactionLimit, validAccountNumbers, paymentPrefix);
+            return existingPayment;
         }
 
         Payment payment = new Payment();
@@ -51,15 +66,12 @@ public class PaymentService {
         user.setLastPaymentCreateAt(LocalDateTime.now());
         userRepository.save(user);
 
-        return paymentRepository.save(payment);
+        Payment paymentSaved = paymentRepository.save(payment);
+        confirmPayments(startDate, endDate, transactionLimit, validAccountNumbers, paymentPrefix);
+
+        return paymentSaved;
     }
 
-    // Lấy danh sách thanh toán PENDING
-    public List<Payment> getPendingPayments() {
-        return paymentRepository.findByStatus("PENDING");
-    }
-
-    // Xác minh giao dịch và cập nhật thanh toán
     // Xác minh giao dịch và cập nhật thanh toán
     public void confirmPayments(String startDate, String endDate, int limit, List<String> validAccountNumbers, String paymentPrefix) {
         try {
@@ -139,6 +151,10 @@ public class PaymentService {
         }
     }
 
+    // Lấy danh sách thanh toán PENDING
+    public List<Payment> getPendingPayments() {
+        return paymentRepository.findByStatus("PENDING");
+    }
 
     // Hàm tách mã thanh toán từ nội dung giao dịch
     private String extractPaymentCode(String transactionContent, String paymentPrefix) {

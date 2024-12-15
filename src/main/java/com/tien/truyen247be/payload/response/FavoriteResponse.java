@@ -15,6 +15,7 @@ public class FavoriteResponse {
     private Long comicId;
     private String comicName;
     private String comicThumbnail;
-//    private Long chapterNumber;
-//    private LocalDateTime updateAt;
+    private Long views;
+    private Long favorites;
+    private Long numberOfComment;
 }

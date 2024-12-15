@@ -48,7 +48,8 @@ public class WebSecurityConfig {
     private String googleRedirectUri;
 
     @Autowired
-    UserDetailsServiceImpl userDetailsService; // Service để lấy thông tin người dùng từ DB hoặc nguồn khác
+    private UserDetailsServiceImpl userDetailsService; // Service để lấy thông tin người dùng từ DB hoặc nguồn khác
+
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler; // Xử lý khi người dùng không được phép truy cập
 

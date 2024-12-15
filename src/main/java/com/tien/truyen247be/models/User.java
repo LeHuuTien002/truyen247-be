@@ -41,6 +41,8 @@ public class User {
     @Size(max = 120)
     private String password;
 
+    private String resetToken;
+
     private String googleId;
 
     private String picture;

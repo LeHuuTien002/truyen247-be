@@ -11,5 +11,7 @@ import java.util.Optional;
 public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
     List<Favorite> findByUserId(Long userId);
 
+    Long countByComicId(Long comicId);
+
     Optional<Favorite> findByUserIdAndComicId(Long userId, Long comicId);
 }

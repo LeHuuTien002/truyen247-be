@@ -1,7 +1,6 @@
 package com.tien.truyen247be.controllers;
 
 import com.tien.truyen247be.models.Payment;
-import com.tien.truyen247be.payload.request.PaymentRequest;
 import com.tien.truyen247be.repository.PaymentRepository;
 import com.tien.truyen247be.security.services.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;

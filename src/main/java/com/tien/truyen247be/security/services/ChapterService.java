@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -54,17 +55,14 @@ public class ChapterService {
     }
 
     public ResponseEntity<?> updateChapter(Long comicId, Long chapterId, ChapterRequest chapterRequest) {
-        if (!chapterRepository.existsByTitle(chapterRequest.getTitle())) {
-
-            Chapter chapter = chapterRepository.findByIdAndComicId(chapterId, comicId).orElseThrow(() -> new ResourceNotFoundException("Không tìm chương với id: " + chapterId));
-
+        Chapter chapter = chapterRepository.findByIdAndComicId(chapterId, comicId).orElseThrow(() -> new ResourceNotFoundException("Không tìm chương với id: " + chapterId));
+        if (chapterRepository.existsByComicIdAndChapterNumber(comicId, chapterRequest.getChapterNumber()) && !Objects.equals(chapter.getChapterNumber(), chapterRequest.getChapterNumber())) {
+            throw new GenreAlreadyExistsException("Số chương đã tồn tại. Vui lòng nhập số chương khác.");
+        } else {
             chapter.setTitle(chapterRequest.getTitle());
             chapter.setChapterNumber(chapterRequest.getChapterNumber());
-
             chapterRepository.save(chapter);
             return ResponseEntity.ok("Cập nhật chương thành công!");
-        } else {
-            throw new GenreAlreadyExistsException("Tiêu đề đã tồn tại. Vui lòng nhập tiêu đề khác.");
         }
     }
 

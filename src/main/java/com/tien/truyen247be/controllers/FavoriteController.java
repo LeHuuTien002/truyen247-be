@@ -1,6 +1,5 @@
 package com.tien.truyen247be.controllers;
 
-import com.tien.truyen247be.payload.request.FavoriteRequest;
 import com.tien.truyen247be.security.services.FavoriteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

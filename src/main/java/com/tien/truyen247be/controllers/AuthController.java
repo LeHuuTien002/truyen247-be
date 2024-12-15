@@ -19,6 +19,7 @@ import com.tien.truyen247be.payload.response.MessageResponse;
 import com.tien.truyen247be.repository.RoleRepository;
 import com.tien.truyen247be.repository.UserRepository;
 import com.tien.truyen247be.security.jwt.JwtUtils;
+import com.tien.truyen247be.security.services.ForgotPasswordService;
 import com.tien.truyen247be.security.services.UserDetailsImpl;
 import jakarta.validation.Valid;
 
@@ -57,6 +58,9 @@ public class AuthController {
 
     @Autowired
     JwtUtils jwtUtils;
+
+    @Autowired
+    private ForgotPasswordService forgotPasswordService;
 
     @Value("${oauth2.client.registration.google.client-id}")
     private String googleClientId;  // Inject client-id từ properties
@@ -112,7 +116,6 @@ public class AuthController {
         try {
             // Lấy idToken từ client
             String idToken = oAuth2LoginRequest.getIdToken();
-            log.info("Received idToken: {}", idToken);
 
             // Xác thực idToken qua GoogleIdTokenVerifier
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
@@ -121,20 +124,17 @@ public class AuthController {
 
             GoogleIdToken googleIdToken = verifier.verify(idToken);
             if (googleIdToken == null) {
-                log.error("Invalid Google ID Token");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Collections.singletonMap("message", "Token Google không hợp lệ"));
             }
 
             // Lấy thông tin payload từ idToken
             GoogleIdToken.Payload payload = googleIdToken.getPayload();
-            log.info("Google Payload: {}", payload);
 
             String email = payload.getEmail();
             String name = (String) payload.get("name");
             String picture = (String) payload.get("picture");
             String googleId = payload.getSubject(); // Google ID (subject từ token)
-            log.info("Email: {}, Name: {}, Picture: {}, Google ID: {}", email, name, picture, googleId);
 
             // Kiểm tra xem người dùng đã tồn tại trong database chưa
             Optional<User> userOptional = userRepository.findByEmail(email);
@@ -142,10 +142,8 @@ public class AuthController {
             if (userOptional.isPresent()) {
                 // Nếu người dùng đã tồn tại, kiểm tra trạng thái tài khoản
                 user = userOptional.get();
-                log.info("User exists: {}", user);
 
                 if (!user.isActive()) {
-                    log.error("User is disabled: {}", user);
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(Collections.singletonMap("message", "Tài khoản của bạn đã bị khóa hoặc không hoạt động."));
                 }
@@ -162,11 +160,9 @@ public class AuthController {
                 }
                 if (isUpdated) {
                     userRepository.save(user);
-                    log.info("User updated with Google info: {}", user);
                 }
             } else {
                 // Nếu người dùng chưa tồn tại, tạo mới
-                log.info("User not found, creating new user");
                 user = new User();
                 user.setEmail(email);
                 user.setUsername(name);
@@ -178,7 +174,6 @@ public class AuthController {
                 user.setRoles(Collections.singleton(roleRepository.findByName(ERole.ROLE_USER)
                         .orElseThrow(() -> new RuntimeException("Role không tồn tại"))));
                 userRepository.save(user);
-                log.info("New user created: {}", user);
             }
 
             // Chuyển đổi từ User sang UserDetailsImpl
@@ -203,7 +198,6 @@ public class AuthController {
                             .collect(Collectors.toList())
             ));
         } catch (Exception e) {
-            log.error("Google Sign-In Error: ", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Collections.singletonMap("message", "Xác thực Google không thành công"));
         }
@@ -256,5 +250,17 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("Đã đăng ký thành công!"));
+    }
+
+    // Endpoint gửi yêu cầu quên mật khẩu
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+        return forgotPasswordService.sendPasswordResetEmail(email);
+    }
+
+    // Endpoint thay đổi mật khẩu
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+        return forgotPasswordService.resetPassword(token, newPassword);
     }
 }

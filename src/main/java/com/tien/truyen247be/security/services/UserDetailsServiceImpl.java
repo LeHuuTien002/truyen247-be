@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,9 +23,11 @@ import java.util.List;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
+
     @Autowired
     private S3Service s3Service;
+
 
     @Override
     @Transactional
@@ -50,7 +51,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         String avatar = s3Service.uploadFile(file);
         user.setPicture(avatar);
         userRepository.save(user);
-        return ResponseEntity.ok("Cập nhật avatar thành công!");
+        return ResponseEntity.ok("Cập nhật ảnh đại diện thành công");
     }
 
     public ResponseEntity<?> getAllUser() {
@@ -64,7 +65,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     public ResponseEntity<?> updateUser(Long userId, UserRequest request) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + userId));
         user.setActive(request.isActive());
         userRepository.save(user);
         return ResponseEntity.ok("Cập nhật thành công");

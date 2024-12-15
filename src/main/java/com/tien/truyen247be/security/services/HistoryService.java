@@ -33,6 +33,15 @@ public class HistoryService {
     @Autowired
     private ChapterRepository chapterRepository;
 
+    @Autowired
+    private ViewService viewService;
+
+    @Autowired
+    private FavoriteService favoriteService;
+
+    @Autowired
+    private CommentService commentService;
+
     public void createHistory(Long userId, Long comicId, Long chapterId) {
         // Lấy User, Comic, và Chapter
         User user = userRepository.findById(userId)
@@ -88,6 +97,9 @@ public class HistoryService {
             historyResponse.setId(history.getId());
             historyResponse.setComicId(history.getComic().getId());
             historyResponse.setChapterId(history.getChapter().getId());
+            historyResponse.setViews(viewService.getViewsByComicId(history.getComic().getId()));
+            historyResponse.setFavorites(favoriteService.countFavorites(history.getComic().getId()));
+            historyResponse.setNumberOfComment(commentService.getNumberOfComments(history.getComic().getId()));
             historyResponse.setComicName(history.getComic().getName());
             historyResponse.setComicThumbnail(history.getComic().getThumbnail());
             historyResponse.setChapterNumber(history.getChapter().getChapterNumber());
@@ -109,6 +121,9 @@ public class HistoryService {
             historyResponse.setComicId(history.getComic().getId());
             historyResponse.setChapterId(history.getChapter().getId());
             historyResponse.setComicName(history.getComic().getName());
+            historyResponse.setNumberOfComment(commentService.getNumberOfComments(history.getComic().getId()));
+            historyResponse.setViews(viewService.getViewsByComicId(history.getComic().getId()));
+            historyResponse.setFavorites(favoriteService.countFavorites(history.getComic().getId()));
             historyResponse.setComicThumbnail(history.getComic().getThumbnail());
             historyResponse.setChapterNumber(history.getChapter().getChapterNumber());
 

@@ -16,6 +16,9 @@ public class ComicResponse {
     private String status;
     private String content;
     private String author;
+    private Long views;
+    private Long favorites;
+    private Long numberOfComment;
     private boolean activate;
     private String thumbnail;
     private LocalDateTime createAt;

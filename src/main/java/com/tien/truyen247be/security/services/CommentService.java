@@ -108,6 +108,7 @@ public class CommentService {
         return ResponseEntity.ok("Bình luận đã được xóa thành công");
     }
 
-
-
+    public Long getNumberOfComments(Long comicId) {
+        return commentRepository.countByComicId(comicId);
+    }
 }

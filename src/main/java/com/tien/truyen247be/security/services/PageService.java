@@ -31,6 +31,9 @@ public class PageService {
     @Autowired
     private ChapterRepository chapterRepository;
 
+    @Autowired
+    private ViewService viewService;
+
     public ResponseEntity<?> createPages(Long id, List<MultipartFile> files) throws IOException {
         if (files.isEmpty()) {
             throw new IllegalArgumentException("Danh sách file tải lên không được để trống.");
@@ -102,7 +105,20 @@ public class PageService {
 
     public ResponseEntity<List<PageResponse>> getPagesByChapterId(Long id) {
         Chapter chapter = chapterRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chương với id: " + id));
+        viewService.incrementViewCount(chapter.getComic().getId());
+        List<PageResponse> pageResponses = chapter.getPages().stream()
+                .map(page -> new PageResponse(
+                        page.getId(),
+                        page.getPageNumber(),
+                        page.getImageUrl(),
+                        page.getCreateAt(),
+                        page.getUpdateAt()
+                )).toList();
+        return ResponseEntity.ok(pageResponses);
+    }
 
+    public ResponseEntity<List<PageResponse>> getAllPageByChapterId(Long id) {
+        Chapter chapter = chapterRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chương với id: " + id));
         List<PageResponse> pageResponses = chapter.getPages().stream()
                 .map(page -> new PageResponse(
                         page.getId(),

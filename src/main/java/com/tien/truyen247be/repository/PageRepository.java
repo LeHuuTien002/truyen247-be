@@ -15,7 +15,5 @@ public interface PageRepository extends JpaRepository<Page, Long> {
     @Query("SELECT COUNT(p) > 0 FROM Page p WHERE p.pageNumber = :pageNumber AND p.chapter.id = :chapterId")
     boolean existsByPageNumberAndChapterId(@Param("pageNumber") Long pageNumber, @Param("chapterId") Long chapterId);
 
-    boolean existsByChapterId(Long chapterId);
-
     Optional<Page> findByIdAndChapterId(Long pageId, Long chapterId);
 }

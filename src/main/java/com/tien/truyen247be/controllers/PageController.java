@@ -34,4 +34,9 @@ public class PageController {
     public ResponseEntity<?> deletePage(@PathVariable Long chapterId, @PathVariable Long pageId) {
         return ResponseEntity.ok(pageService.deletePage(chapterId, pageId));
     }
+
+    @GetMapping("/admin/comic/chapter/{id}/pages")
+    public ResponseEntity<?> getPagesByChapterId(@PathVariable Long id) {
+        return pageService.getAllPageByChapterId(id);
+    }
 }

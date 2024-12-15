@@ -48,6 +48,9 @@ public class Comic {
     @Column(name = "update_at")
     private LocalDateTime updateAt;
 
+    @OneToOne(mappedBy = "comic", cascade = CascadeType.ALL, orphanRemoval = true)
+    private View view;
+
     @OneToMany(mappedBy = "comic", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Chapter> chapters = new HashSet<>();
 

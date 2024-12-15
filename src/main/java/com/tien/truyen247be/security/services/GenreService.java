@@ -83,6 +83,9 @@ public class GenreService {
     public ResponseEntity<?> updateGenre(Long genreId, GenreRequest genreRequest) {
         // Kiểm tra xem id có tồn tại trong cơ sở dữ liệu hay không
         Optional<Genre> genreOptional = genreRepository.findById(genreId);
+        if (genreRepository.existsByName(genreRequest.getName())) {
+            throw new GenreAlreadyExistsException("Tên thể loại truyện đã tồn tại!");
+        }
         if (genreOptional.isEmpty()) {
             // Nếu id không tồn tại, trả về mã lỗi 404 (Not Found) cùng thông báo lỗi
             throw new GenreAlreadyExistsException("Id thể loại truyện này không tồn tại!");
