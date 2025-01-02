@@ -19,17 +19,16 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER) // Tải dữ liệu liên quan ngay lập tức
-    @JoinColumn(name = "user_id", nullable = false) // Tên cột khóa ngoại
-    @JsonIgnore // Bỏ qua trường user khi tuần tự hóa
-    private User user; // Quan hệ tới bảng User
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private User user;
 
-    private String paymentMethod; // Ví dụ: BankTransfer
-    private String transactionId; // Mã giao dịch ngân hàng
-    private String paymentCode; // Mã thanh toán do hệ thống tạo
-    private String status; // Ví dụ: PENDING, COMPLETED, FAILED
-    private Double amount; // Số tiền cần thanh toán
+    private String paymentMethod;
+    private String transactionId;
+    private String paymentCode;
+    private String status;
+    private Double amount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
 }

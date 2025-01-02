@@ -37,10 +37,10 @@ public class Comic {
     private String author;
 
     @Column(nullable = false)
-    private boolean activate; // Mặc định truyện đang hoạt động
+    private boolean activate;
 
     @Column(nullable = false)
-    private String thumbnail; // URL hoặc đường dẫn tới ảnh bìa
+    private String thumbnail;
 
     @Column(name = "create_at", nullable = false, updatable = false)
     private LocalDateTime createAt;
@@ -60,17 +60,4 @@ public class Comic {
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
     private Set<Genre> genres = new HashSet<>();
-
-
-    // Phương thức này sẽ chạy trước khi một bản ghi mới được lưu vào cơ sở dữ liệu
-    @PrePersist
-    protected void createAt() {
-        this.createAt = LocalDateTime.now(); // Lấy thời gian hiện tại khi tạo mới bản ghi
-    }
-
-    // Phương thức này sẽ chạy trước mỗi lần cập nhật bản ghi
-    @PreUpdate
-    protected void updateAt() {
-        this.updateAt = LocalDateTime.now(); // Cập nhật thời gian mỗi khi bản ghi được cập nhật
-    }
 }

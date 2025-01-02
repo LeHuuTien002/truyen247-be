@@ -96,6 +96,6 @@ public class PublicController {
 
     @GetMapping("/public/top-comics-view")
     public ResponseEntity<?> getTopComicsView() {
-        return ResponseEntity.ok(viewService.getTop10Views());
+        return ResponseEntity.ok(viewService.getTop5Views());
     }
 }

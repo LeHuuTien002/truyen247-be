@@ -94,7 +94,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return active; // Trả về trạng thái hoạt động của tài khoản
+        return active;
     }
 
     @Override

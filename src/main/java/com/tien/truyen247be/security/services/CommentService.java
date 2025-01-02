@@ -32,7 +32,6 @@ public class CommentService {
     private ComicRepository comicRepository;
 
     public ResponseEntity<?> addComment(CommentRequest commentRequest) {
-        // Kiểm tra tính hợp lệ của các tham số
         Comic comic = comicRepository.findById(commentRequest.getComicId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy truyện tranh"));
         User user = userRepository.findById(commentRequest.getUserId())
@@ -48,7 +47,6 @@ public class CommentService {
         return ResponseEntity.ok("Đã thêm bình luận");
     }
 
-    // Get all comments for a comic
     public ResponseEntity<List<CommentResponse>> getComments(Long comicId) {
         List<Comment> comments = commentRepository.findByComicIdAndParentIsNull(comicId);
 
@@ -59,7 +57,6 @@ public class CommentService {
         return ResponseEntity.ok(commentResponses);
     }
 
-    // Map a Comment entity to CommentResponse DTO
     private CommentResponse mapToCommentResponse(Comment comment) {
         return new CommentResponse(
                 comment.getId(),
@@ -72,21 +69,16 @@ public class CommentService {
         );
     }
 
-    // Reply to a comment
     public ResponseEntity<?> replyToComment(ReplyCommentRequest replyCommentRequest) {
-        // Validate the parent comment
         Comment parentComment = commentRepository.findById(replyCommentRequest.getParentCommentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found"));
 
-        // Validate the user
         User user = userRepository.findById(replyCommentRequest.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Validate the comic
         Comic comic = comicRepository.findById(replyCommentRequest.getComicId())
                 .orElseThrow(() -> new ResourceNotFoundException("Comic not found"));
 
-        // Create a new reply
         Comment reply = new Comment();
         reply.setContent(replyCommentRequest.getContent());
         reply.setUser(user);

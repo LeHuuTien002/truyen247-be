@@ -71,14 +71,4 @@ public class User {
     private LocalDateTime updateAt;
 
     private LocalDateTime lastPaymentCreateAt;
-
-    @PrePersist
-    protected void createAt() {
-        this.createAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void updateAt() {
-        this.updateAt = LocalDateTime.now();
-    }
 }

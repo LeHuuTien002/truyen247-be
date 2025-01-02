@@ -39,7 +39,6 @@ public class PageService {
             throw new IllegalArgumentException("Danh sách file tải lên không được để trống.");
         }
 
-        // Tìm chương theo ID
         Chapter chapter = chapterRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chương với id: " + id));
 
@@ -47,28 +46,24 @@ public class PageService {
 
         for (long i = 0L; i < files.size(); i++) {
             MultipartFile file = files.get(Math.toIntExact(i));
-            Long pageNumber = i + 1; // Số trang tự động tăng dần từ 1
+            Long pageNumber = i + 1;
 
-            // Kiểm tra số trang đã tồn tại
             if (pageRepository.existsByPageNumberAndChapterId(pageNumber, id)) {
                 throw new GenreAlreadyExistsException("Số trang " + pageNumber + " đã tồn tại. Vui lòng kiểm tra lại.");
             }
 
-            // Tải file lên S3
             String imgUrl = s3Service.uploadFile(file);
 
-            // Tạo đối tượng Page
             Page page = new Page();
             page.setPageNumber(pageNumber);
             page.setImageUrl(imgUrl);
+            page.setCreateAt(LocalDateTime.now());
             page.setUpdateAt(LocalDateTime.now());
             page.setChapter(chapter);
 
-            // Thêm vào danh sách
             pages.add(page);
         }
 
-        // Lưu tất cả các trang
         pageRepository.saveAll(pages);
 
         return ResponseEntity.ok("Tạo các trang mới thành công!");
@@ -86,6 +81,7 @@ public class PageService {
             } else {
                 page.setPageNumber(pageRequest.getPageNumber());
                 page.setImageUrl(s3Service.updateFile(file));
+                page.setUpdateAt(LocalDateTime.now());
 
                 pageRepository.save(page);
 

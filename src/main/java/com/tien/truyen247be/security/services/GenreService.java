@@ -64,15 +64,12 @@ public class GenreService {
         }
     }
 
-    public Optional<Genre> getGenreById(Long genreId) {
-        return genreRepository.findById(genreId);
-    }
-
     public ResponseEntity<?> createGenre(GenreRequest genreRequest) {
         if (!genreRepository.existsByName(genreRequest.getName())) {
             Genre genre = new Genre();
             genre.setName(genreRequest.getName());
             genre.setDescription(genreRequest.getDescription());
+            genre.setUpdateAt(LocalDateTime.now());
             genre.setUpdateAt(LocalDateTime.now());
             genreRepository.save(genre);
             return ResponseEntity.ok("Tạo thể loại truyện thành công!");
@@ -90,6 +87,7 @@ public class GenreService {
             } else {
                 genre.setName(genreRequest.getName());
                 genre.setDescription(genreRequest.getDescription());
+                genre.setUpdateAt(LocalDateTime.now());
                 genreRepository.save(genre);
                 return ResponseEntity.ok("Cập nhật thể loại truyện thành công!");
             }
@@ -99,16 +97,13 @@ public class GenreService {
     }
 
     public ResponseEntity<?> deleteGenre(Long theLoaiId) {
-        // Tìm thể loại theo ID
         Genre genre = genreRepository.findById(theLoaiId)
                 .orElseThrow(() -> new GenreAlreadyExistsException("Thể loại không tồn tại với ID: " + theLoaiId));
 
-        // Gỡ thể loại ra khỏi các truyện liên quan
         for (Comic comic : genre.getComics()) {
             comic.getGenres().remove(genre);
         }
 
-        // Xóa thể loại
         genreRepository.delete(genre);
         return ResponseEntity.ok("Đã xóa thành công!");
     }

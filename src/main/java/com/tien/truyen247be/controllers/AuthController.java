@@ -1,5 +1,6 @@
 package com.tien.truyen247be.controllers;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -153,6 +154,8 @@ public class AuthController {
                 user.setUsername(name);
                 user.setPassword(UUID.randomUUID().toString());
                 user.setPicture(picture);
+                user.setCreateAt(LocalDateTime.now());
+                user.setUpdateAt(LocalDateTime.now());
                 user.setRegistrationType(RegistrationType.GOOGLE);
                 user.setGoogleId(googleId);
                 user.setActive(true);
@@ -202,6 +205,8 @@ public class AuthController {
         User user = new User();
         user.setUsername(signUpRequest.getUsername());
         user.setEmail(signUpRequest.getEmail());
+        user.setCreateAt(LocalDateTime.now());
+        user.setUpdateAt(LocalDateTime.now());
         user.setRegistrationType(RegistrationType.STANDARD);
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
 

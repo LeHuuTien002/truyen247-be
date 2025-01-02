@@ -40,7 +40,6 @@ public class HistoryService {
     private CommentRepository commentRepository;
 
     public void createHistory(Long userId, Long comicId, Long chapterId) {
-        // Lấy User, Comic, và Chapter
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
         Comic comic = comicRepository.findById(comicId)
@@ -49,7 +48,6 @@ public class HistoryService {
                 .orElseThrow(() -> new IllegalArgumentException("Chapter not found with ID: " + chapterId));
 
         if (!historyRepository.existsByUserIdAndComicId(userId, comicId)) {
-            // Tạo mới lịch sử đọc
             History history = new History();
             history.setUser(user);
             history.setComic(comic);
@@ -61,14 +59,9 @@ public class HistoryService {
         }
     }
 
-    /**
-     * Cập nhật lịch sử đọc
-     */
     public void updateHistory(Long userId, Long comicId, Long chapterId) {
-        // Kiểm tra nếu lịch sử đã tồn tại
         Optional<History> optionalHistory = historyRepository.findByUserIdAndComicId(userId, comicId);
         if (optionalHistory.isPresent()) {
-            // Nếu tồn tại, cập nhật chapter và thời gian
             History history = optionalHistory.get();
             Chapter chapter = chapterRepository.findById(chapterId)
                     .orElseThrow(() -> new IllegalArgumentException("Chapter not found with ID: " + chapterId));

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,6 +68,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public ResponseEntity<?> updateUser(Long userId, UserRequest request) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + userId));
         user.setActive(request.isActive());
+        user.setUpdateAt(LocalDateTime.now());
         userRepository.save(user);
         return ResponseEntity.ok("Cập nhật thành công");
     }

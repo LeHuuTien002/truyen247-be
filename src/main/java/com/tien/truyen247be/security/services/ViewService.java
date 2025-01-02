@@ -32,9 +32,8 @@ public class ViewService {
         }
     }
 
-
-    public List<TopComicViewResponse> getTop10Views() {
-        Pageable pageable = PageRequest.of(0, 10); // Trang đầu tiên, 10 kết quả
+    public List<TopComicViewResponse> getTop5Views() {
+        Pageable pageable = PageRequest.of(0, 5);
         List<View> viewList = viewRepository.findTop10ByOrderByViewsCountDesc(pageable);
         List<TopComicViewResponse> responses = new ArrayList<>();
         for (View view : viewList) {

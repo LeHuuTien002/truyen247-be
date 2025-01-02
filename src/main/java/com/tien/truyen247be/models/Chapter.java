@@ -39,17 +39,4 @@ public class Chapter {
 
     @Column(name = "update_at")
     private LocalDateTime updateAt;
-
-    public Chapter(Long chapterId) {
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        this.createAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    void onUpdate() {
-        this.updateAt = LocalDateTime.now();
-    }
 }

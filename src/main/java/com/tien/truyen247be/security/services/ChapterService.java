@@ -34,7 +34,6 @@ public class ChapterService {
     @Autowired
     private UserRepository userRepository;
 
-    // Tạo chương truyện
     public ResponseEntity<?> createChapter(Long id, ChapterRequest chapterRequest) {
         if (chapterRepository.existsByComicIdAndChapterNumber(id, chapterRequest.getChapterNumber())) {
             throw new GenreAlreadyExistsException("Số chương đã tồn tại. Vui lòng chọn số chương khác.");
@@ -46,6 +45,7 @@ public class ChapterService {
             chapter.setTitle(chapterRequest.getTitle());
             chapter.setChapterNumber(chapterRequest.getChapterNumber());
             chapter.setUpdateAt(LocalDateTime.now());
+            chapter.setCreateAt(LocalDateTime.now());
             chapter.setComic(comic);
 
             chapterRepository.save(chapter);
@@ -61,6 +61,7 @@ public class ChapterService {
         } else {
             chapter.setTitle(chapterRequest.getTitle());
             chapter.setChapterNumber(chapterRequest.getChapterNumber());
+            chapter.setUpdateAt(LocalDateTime.now());
             chapterRepository.save(chapter);
             return ResponseEntity.ok("Cập nhật chương thành công!");
         }
@@ -95,7 +96,6 @@ public class ChapterService {
 
         List<Chapter> chapters = chapterRepository.findByComicId(comicId);
 
-        // Chuyển đổi Chapter sang ChapterResponse
         List<ChapterResponse> chapterResponses = chapters.stream()
                 .map(chapter -> new ChapterResponse(
                         chapter.getId(),
@@ -107,13 +107,11 @@ public class ChapterService {
                 .toList();
 
         if (user.isPremium() && user.getPremiumExpiryDate().isAfter(LocalDate.now())) {
-            // Nếu user là premium, trả toàn bộ chapterResponse
             return ResponseEntity.ok(chapterResponses);
         } else {
-            // Nếu user không phải premium, trả về 5 chapterResponse đầu (sắp xếp theo chapterNumber)
             List<ChapterResponse> limitedChapters = chapterResponses.stream()
-                    .sorted(Comparator.comparingLong(ChapterResponse::getChapterNumber))  // Sắp xếp theo chapterNumber
-                    .limit(5)  // Lấy 5 chương đầu
+                    .sorted(Comparator.comparingLong(ChapterResponse::getChapterNumber))
+                    .limit(5)
                     .toList();
             return ResponseEntity.ok(limitedChapters);
         }
@@ -123,7 +121,6 @@ public class ChapterService {
 
         List<Chapter> chapters = chapterRepository.findByComicId(comicId);
 
-        // Chuyển đổi Chapter sang ChapterResponse
         List<ChapterResponse> chapterResponses = chapters.stream()
                 .map(chapter -> new ChapterResponse(
                         chapter.getId(),
@@ -135,13 +132,12 @@ public class ChapterService {
                 .toList();
 
         List<ChapterResponse> limitedChapters = chapterResponses.stream()
-                .sorted(Comparator.comparingLong(ChapterResponse::getChapterNumber))  // Sắp xếp theo chapterNumber
-                .limit(5)  // Lấy 5 chương đầu
+                .sorted(Comparator.comparingLong(ChapterResponse::getChapterNumber))
+                .limit(5)
                 .toList();
         return ResponseEntity.ok(limitedChapters);
     }
 
-    // Lấy truyện tranh theo ID
     public ResponseEntity<ChapterResponse> getChapterById(Long id) {
         Optional<Chapter> chapterOptional = chapterRepository.findById(id);
         if (chapterOptional.isEmpty()) {
