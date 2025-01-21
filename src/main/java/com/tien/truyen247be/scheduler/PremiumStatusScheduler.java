@@ -1,7 +1,7 @@
 package com.tien.truyen247be.scheduler;
 
-import com.tien.truyen247be.models.User;
-import com.tien.truyen247be.repository.UserRepository;
+import com.tien.truyen247be.user.User;
+import com.tien.truyen247be.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,12 +17,11 @@ public class PremiumStatusScheduler {
 
     @Scheduled(cron = "0 0 0 * * *") // Chạy vào 00:00 mỗi ngày
     public void updatePremiumStatus() {
-        // Tìm tất cả người dùng có Premium hết hạn
         List<User> expiredUsers = userRepository.findByPremiumTrueAndPremiumExpiryDateBefore(LocalDate.now());
 
         for (User user : expiredUsers) {
-            user.setPremium(false); // Hết hạn Premium
-            userRepository.save(user); // Cập nhật lại database
+            user.setPremium(false);
+            userRepository.save(user);
         }
 
         System.out.println("Updated premium status for expired users at " + LocalDateTime.now());

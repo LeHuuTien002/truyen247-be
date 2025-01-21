@@ -1,0 +1,33 @@
+package com.tien.truyen247be.view;
+
+import com.tien.truyen247be.comic.Comic;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Table(name = "views")
+public class View {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "comic_id", referencedColumnName = "id")
+    private Comic comic;
+
+    @Column(nullable = false)
+    private Long viewsCount;
+
+    @Column(nullable = false)
+    private LocalDateTime lastUpdated;
+}
