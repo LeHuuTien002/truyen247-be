@@ -1,4 +1,4 @@
-package com.tien.truyen247be.Exception.dto;
+package com.tien.truyen247be.exception.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

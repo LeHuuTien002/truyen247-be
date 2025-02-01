@@ -30,32 +30,35 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Size(max = 20)
+    @Column(name = "username")
     private String username;
 
-    @NotBlank
-    @Size(max = 50)
-    @Email
+    @Column(name = "email")
     private String email;
 
-    @NotBlank
-    @Size(max = 120)
+    @Column(name = "password")
     private String password;
 
+    @Column(name = "reset_token")
     private String resetToken;
 
+    @Column(name = "google_id")
     private String googleId;
 
+    @Column(name = "picture")
     private String picture;
 
+    @Column(name = "active")
     private boolean active = true;
 
+    @Column(name = "premium")
     private boolean premium = false;
 
+    @Column(name = "premium_expriry_date")
     private LocalDate premiumExpiryDate;
 
     @Enumerated
+    @Column(name = "registration_type")
     private RegistrationType registrationType;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -66,20 +69,12 @@ public class User {
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
-
-
-
-
-
-
-
-
-
     @Column(name = "create_at", nullable = false, updatable = false)
     private LocalDateTime createAt;
 
     @Column(name = "update_at")
     private LocalDateTime updateAt;
 
+    @Column(name = "last_payment_create")
     private LocalDateTime lastPaymentCreateAt;
 }

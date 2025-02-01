@@ -1,4 +1,4 @@
-package com.tien.truyen247be.Exception;
+package com.tien.truyen247be.exception;
 
 public class GenreAlreadyExistsException extends RuntimeException {
 

@@ -1,10 +1,11 @@
-package com.tien.truyen247be.Exception.dto;
+package com.tien.truyen247be.exception.dto;
 
 import lombok.Data;
 
 @Data
-public class SuccessResponse {
+public class ErrorResponse {
     private int status;
     private String message;
     private String timestamp;
+
 }

@@ -1,6 +1,6 @@
 package com.tien.truyen247be.user;
 
-import com.tien.truyen247be.Exception.GenreAlreadyExistsException;
+import com.tien.truyen247be.exception.GenreAlreadyExistsException;
 import com.tien.truyen247be.comic.S3Service;
 import com.tien.truyen247be.user.dto.UserRequest;
 import com.tien.truyen247be.user.dto.UserResponse;

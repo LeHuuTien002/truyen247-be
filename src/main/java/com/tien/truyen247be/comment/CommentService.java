@@ -1,6 +1,6 @@
 package com.tien.truyen247be.comment;
 
-import com.tien.truyen247be.Exception.ResourceNotFoundException;
+import com.tien.truyen247be.exception.ResourceNotFoundException;
 import com.tien.truyen247be.comic.Comic;
 import com.tien.truyen247be.user.User;
 import com.tien.truyen247be.comment.dto.CommentRequest;

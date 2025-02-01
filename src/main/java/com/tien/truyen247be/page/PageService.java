@@ -1,7 +1,7 @@
 package com.tien.truyen247be.page;
 
-import com.tien.truyen247be.Exception.ResourceNotFoundException;
-import com.tien.truyen247be.Exception.GenreAlreadyExistsException;
+import com.tien.truyen247be.exception.ResourceNotFoundException;
+import com.tien.truyen247be.exception.GenreAlreadyExistsException;
 import com.tien.truyen247be.chapter.Chapter;
 import com.tien.truyen247be.page.dto.PageRequest;
 import com.tien.truyen247be.page.dto.PageResponse;

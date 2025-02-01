@@ -1,7 +1,7 @@
 package com.tien.truyen247be.comic;
 
-import com.tien.truyen247be.Exception.ResourceNotFoundException;
-import com.tien.truyen247be.Exception.GenreAlreadyExistsException;
+import com.tien.truyen247be.exception.ResourceNotFoundException;
+import com.tien.truyen247be.exception.GenreAlreadyExistsException;
 import com.tien.truyen247be.comment.CommentRepository;
 import com.tien.truyen247be.favorite.FavoriteRepository;
 import com.tien.truyen247be.genre.GenreRepository;
@@ -11,6 +11,9 @@ import com.tien.truyen247be.comic.dto.ComicRequest;
 import com.tien.truyen247be.comic.dto.ComicResponse;
 import com.tien.truyen247be.view.ViewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -154,11 +157,11 @@ public class ComicService {
         return ResponseEntity.ok("Đã xóa thành công!");
     }
 
-    public ResponseEntity<List<ComicResponse>> getAllComic() {
-        List<Comic> comicList = comicRepository.findAll();
-        if (!comicList.isEmpty()) {
-            List<ComicResponse> comicResponseList = new ArrayList<>();
-            for (Comic comic : comicList) {
+    public Page<ComicResponse> getAllComic(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Comic> comicPage = comicRepository.findAll(pageable);
+        if (!comicPage.isEmpty()) {
+            Page<ComicResponse> comicResponsePage = comicPage.map(comic -> {
                 ComicResponse comicResponse = new ComicResponse();
 
                 comicResponse.setId(comic.getId());
@@ -171,12 +174,11 @@ public class ComicService {
                 comicResponse.setThumbnail(comic.getThumbnail());
                 comicResponse.setCreateAt(comic.getCreateAt());
                 comicResponse.setUpdateAt(comic.getUpdateAt());
-
-                comicResponseList.add(comicResponse);
-            }
-            return ResponseEntity.ok(comicResponseList);
+                return comicResponse;
+            });
+            return comicResponsePage;
         } else {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            return null;
         }
     }
 

@@ -1,7 +1,7 @@
 package com.tien.truyen247be.chapter;
 
-import com.tien.truyen247be.Exception.ResourceNotFoundException;
-import com.tien.truyen247be.Exception.GenreAlreadyExistsException;
+import com.tien.truyen247be.exception.ResourceNotFoundException;
+import com.tien.truyen247be.exception.GenreAlreadyExistsException;
 import com.tien.truyen247be.chapter.dto.ChapterResponse;
 import com.tien.truyen247be.comic.Comic;
 import com.tien.truyen247be.user.User;

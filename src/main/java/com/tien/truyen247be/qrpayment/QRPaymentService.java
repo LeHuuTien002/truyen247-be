@@ -1,9 +1,9 @@
 package com.tien.truyen247be.qrpayment;
 
 import com.tien.truyen247be.qrpayment.dto.QRPaymentRequest;
-import com.tien.truyen247be.Exception.dto.ErrorResponse;
+import com.tien.truyen247be.exception.dto.ErrorResponse;
 import com.tien.truyen247be.qrpayment.dto.QRPaymentResponse;
-import com.tien.truyen247be.Exception.dto.SuccessResponse;
+import com.tien.truyen247be.exception.dto.SuccessResponse;
 import com.tien.truyen247be.comic.S3Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

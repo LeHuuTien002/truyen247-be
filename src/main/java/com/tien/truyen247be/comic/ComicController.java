@@ -31,7 +31,8 @@ public class ComicController {
     }
 
     @GetMapping("/admin/comics/list")
-    public ResponseEntity<?> getAllComics() {
-        return comicService.getAllComic();
+    public ResponseEntity<?> getAllComics(@RequestParam(defaultValue = "0") int page,
+                                          @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(comicService.getAllComic(page, size));
     }
 }

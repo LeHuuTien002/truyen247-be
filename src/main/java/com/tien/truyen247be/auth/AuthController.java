@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.security.auth.login.LoginException;
+
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -23,7 +25,7 @@ public class AuthController {
     private ForgotPasswordService forgotPasswordService;
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) throws LoginException {
         return authService.signIn(loginRequest);
     }
 

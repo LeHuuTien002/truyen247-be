@@ -1,6 +1,6 @@
 package com.tien.truyen247be.favorite;
 
-import com.tien.truyen247be.Exception.ResourceNotFoundException;
+import com.tien.truyen247be.exception.ResourceNotFoundException;
 import com.tien.truyen247be.comic.Comic;
 import com.tien.truyen247be.comic.ComicRepository;
 import com.tien.truyen247be.comment.CommentRepository;

@@ -4,8 +4,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.tien.truyen247be.Exception.dto.JwtResponse;
-import com.tien.truyen247be.Exception.dto.MessageResponse;
+import com.tien.truyen247be.exception.dto.JwtResponse;
+import com.tien.truyen247be.exception.dto.MessageResponse;
 import com.tien.truyen247be.auth.jwt.JwtUtils;
 import com.tien.truyen247be.auth.payload.LoginRequest;
 import com.tien.truyen247be.auth.payload.OAuth2LoginRequest;
@@ -14,8 +14,6 @@ import com.tien.truyen247be.role.ERole;
 import com.tien.truyen247be.role.Role;
 import com.tien.truyen247be.role.RoleRepository;
 import com.tien.truyen247be.user.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -29,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.security.auth.login.LoginException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -53,7 +52,7 @@ public class AuthService {
     @Value("${oauth2.client.registration.google.client-id}")
     private String googleClientId;
 
-    public ResponseEntity<?> signIn(LoginRequest loginRequest) {
+    public ResponseEntity<?> signIn(LoginRequest loginRequest) throws LoginException {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
@@ -79,9 +78,7 @@ public class AuthService {
                     .status(HttpStatus.FORBIDDEN)
                     .body(Collections.singletonMap("message", "Tài khoản của bạn đã bị khóa hoặc không hoạt động."));
         } catch (BadCredentialsException e) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.singletonMap("message", "Tài khoản hoặc mật khẩu không chính xác"));
+            throw new LoginException("Tài khoản và mật khẩu không chính xác. Vui lòng kiểm tra lại");
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)

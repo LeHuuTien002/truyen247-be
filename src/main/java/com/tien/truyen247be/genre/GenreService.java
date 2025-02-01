@@ -1,6 +1,6 @@
 package com.tien.truyen247be.genre;
 
-import com.tien.truyen247be.Exception.GenreAlreadyExistsException;
+import com.tien.truyen247be.exception.GenreAlreadyExistsException;
 import com.tien.truyen247be.comic.Comic;
 import com.tien.truyen247be.genre.dto.GenreRequest;
 import com.tien.truyen247be.genre.dto.GenreNameResponse;

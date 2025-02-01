@@ -1,4 +1,4 @@
-package com.tien.truyen247be.Exception;
+package com.tien.truyen247be.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
